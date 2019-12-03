@@ -4,10 +4,12 @@ import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.FlxState;
 import days.Day01;
+import days.Day02;
+import days.Day03;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 1;
+    public static final DAYS:Int = 3;
 
     override public function create():Void
     {
@@ -38,10 +40,5 @@ class PlayState extends FlxState
         var cName:String = "days.Day" + StringTools.lpad(Std.string(Number + 1), "0", 2);
         var day:Day = Type.createInstance(Type.resolveClass(cName), []);
         day.start();
-        // trace(cName);
-        // trace(Type.resolveClass("days." + cName));
-
-        // var c:Day = cast Type.createInstance(, []);
-        // cast(Type.resolveClass("days." + cName), Day).start();
     }
 }
