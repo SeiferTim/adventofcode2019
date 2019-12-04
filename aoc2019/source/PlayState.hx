@@ -6,10 +6,11 @@ import flixel.FlxState;
 import days.Day01;
 import days.Day02;
 import days.Day03;
+import days.Day04;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 3;
+    public static final DAYS:Int = 4;
 
     override public function create():Void
     {

@@ -1,9 +1,5 @@
 package days;
 
-import flixel.FlxObject;
-import flixel.util.FlxSort;
-import lime.math.Vector2;
-import flixel.math.FlxVector;
 import flixel.math.FlxMath;
 import flixel.util.FlxAxes;
 import openfl.Assets;
