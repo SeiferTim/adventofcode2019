@@ -42,75 +42,74 @@ class Computer
         var inst:String = Std.string(program[pos]).lpad("0", 5);
         var opcode:String = inst.substr(-2, 2);
         var modes:Array<Int> = inst.substr(0, 3).split("").map(function(v) return Std.parseInt(v));
+        modes.reverse();
         var params:Array<Int> = [0, 0, 0];
 
         switch (opcode)
         {
             case OP_ADD:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
                 params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
                 params[2] = program[pos + 3];
-                trace(pos, opcode, params);
+
                 add(params[0], params[1], params[2]);
-                trace(program[params[2]]);
+
                 pos += 4;
             case OP_MULTIPLY:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
                 params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
                 params[2] = program[pos + 3];
-                trace(pos, opcode, params);
+
                 multiply(params[0], params[1], params[2]);
-                trace(program[params[2]]);
+
                 pos += 4;
             case OP_INPUT:
                 params[0] = Input;
                 params[1] = program[pos + 1];
-                trace(pos, opcode, params);
+
                 input(params[0], params[1]);
-                trace(program[params[1]]);
+
                 pos += 2;
             case OP_OUTPUT:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
-                trace(pos, opcode, params);
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+
                 output(params[0]);
                 pos += 2;
             case OP_JUMP_IF_TRUE:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
-                params[1] = program[pos + 2];
-                trace(pos, opcode, params);
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
+
                 if (params[0] != 0)
                     pos = params[1];
                 else
                     pos += 3;
             case OP_JUMP_IF_FALSE:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
-                params[1] = program[pos + 2];
-                trace(pos, opcode, params);
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
+
                 if (params[0] == 0)
                     pos = params[1];
                 else
                     pos += 3;
             case OP_LESS_THAN:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
                 params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
                 params[2] = program[pos + 3];
-                trace(pos, opcode, params);
+
                 lessThan(params[0], params[1], params[2]);
-                trace(program[params[2]]);
+
                 pos += 4;
             case OP_EQUALS:
-                params[0] = modes[2] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
+                params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
                 params[1] = modes[1] == MODE_POSITION ? program[program[pos + 2]] : program[pos + 2];
                 params[2] = program[pos + 3];
-                trace(pos, opcode, params);
+
                 equals(params[0], params[1], params[2]);
-                trace(program[params[2]]);
+
                 pos += 4;
             case OP_TERMINATE:
-                trace(pos, opcode, params);
                 pos = -1;
             default:
-                trace("ERROR: Unknown Operation: ", pos, opcode);
                 pos = -1;
         }
     }
