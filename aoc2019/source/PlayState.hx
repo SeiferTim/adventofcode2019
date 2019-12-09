@@ -9,10 +9,11 @@ import days.Day03;
 import days.Day04;
 import days.Day05;
 import days.Day06;
+import days.Day07;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 6;
+    public static final DAYS:Int = 7;
 
     override public function create():Void
     {

@@ -1,10 +1,13 @@
 package intcode;
 
+import haxe.io.Error;
+
 using StringTools;
 
 class Computer
 {
     private static inline final OP_ADD:String = "01";
+
     private static inline final OP_MULTIPLY:String = "02";
     private static inline final OP_INPUT:String = "03";
     private static inline final OP_OUTPUT:String = "04";
@@ -17,33 +20,69 @@ class Computer
     private static inline final MODE_POSITION:Int = 0;
     private static inline final MODE_IMMEDIATE:Int = 1;
 
-    private static var program:Array<Int>;
+    public static inline final STATE_ERROR:Int = -2;
+    public static inline final STATE_READY:Int = -1;
+    public static inline final STATE_FINISHED:Int = 0;
+    public static inline final STATE_RUNNING:Int = 1;
+    public static inline final STATE_WAITING:Int = 2;
 
-    private static var pos:Int;
-    private static var outputs:Array<Int>;
+    public var state(default, null):Int = STATE_FINISHED;
 
-    public static function process(Program:String, ?Input:Int = 0):String
+    private var program:Array<Int>;
+    private var originalProgram:String = "";
+
+    private var pos:Int;
+
+    public var outputs:Array<Int>;
+
+    private var inputs:Array<Int>;
+    private var stop:Bool = false;
+
+    public function new(Program:String)
     {
-        program = Program.split(",").map(function(v) return Std.parseInt(v));
-        outputs = [];
-        pos = 0;
-
-        do
-        {
-            readInstruction(Input);
-        }
-        while (pos >= 0);
-
-        return outputs.join(",");
+        originalProgram = Program;
+        program = originalProgram.split(",").map(function(v) return Std.parseInt(v));
+        reset();
     }
 
-    private static function readInstruction(Input:Int):Void
+    private function mainLoop():Void
+    {
+        state = STATE_RUNNING;
+        do
+        {
+            readInstruction();
+        }
+        while (pos >= 0 && !stop);
+    }
+
+    public function reset(?KeepChangedProgram = false):Void
+    {
+        if (!KeepChangedProgram)
+            program = originalProgram.split(",").map(function(v) return Std.parseInt(v));
+        outputs = [];
+        pos = 0;
+        state = STATE_READY;
+    }
+
+    public function start(?Inputs:Array<Int> = null):Void
+    {
+        if (Inputs != null)
+            inputs = Inputs.copy();
+        else
+            Inputs = [];
+        stop = false;
+        mainLoop();
+    }
+
+    private function readInstruction():Void
     {
         var inst:String = Std.string(program[pos]).lpad("0", 5);
         var opcode:String = inst.substr(-2, 2);
         var modes:Array<Int> = inst.substr(0, 3).split("").map(function(v) return Std.parseInt(v));
         modes.reverse();
         var params:Array<Int> = [0, 0, 0];
+
+        //  trace(pos, opcode, modes, params);
 
         switch (opcode)
         {
@@ -64,12 +103,17 @@ class Computer
 
                 pos += 4;
             case OP_INPUT:
-                params[0] = Input;
-                params[1] = program[pos + 1];
+                if (inputs.length > 0)
+                {
+                    params[0] = inputs.shift();
+                    params[1] = program[pos + 1];
 
-                input(params[0], params[1]);
-
-                pos += 2;
+                    input(params[0], params[1]);
+                    pos += 2;
+                    state = STATE_WAITING;
+                }
+                else
+                    stop = true;
             case OP_OUTPUT:
                 params[0] = modes[0] == MODE_POSITION ? program[program[pos + 1]] : program[pos + 1];
 
@@ -108,38 +152,41 @@ class Computer
 
                 pos += 4;
             case OP_TERMINATE:
+                state = STATE_FINISHED;
                 pos = -1;
             default:
+                throw("Error: Invalid Command: " + pos + " - " + opcode);
+                state = STATE_ERROR;
                 pos = -1;
         }
     }
 
-    private static function add(A:Int, B:Int, Out:Int):Void
+    private function add(A:Int, B:Int, Out:Int):Void
     {
         program[Out] = A + B;
     }
 
-    private static function multiply(A:Int, B:Int, Out:Int):Void
+    private function multiply(A:Int, B:Int, Out:Int):Void
     {
         program[Out] = A * B;
     }
 
-    private static function input(A:Int, Out:Int):Void
+    private function input(A:Int, Out:Int):Void
     {
         program[Out] = A;
     }
 
-    private static function output(A:Int):Void
+    private function output(A:Int):Void
     {
         outputs.push(A);
     }
 
-    private static function lessThan(A:Int, B:Int, Out:Int):Void
+    private function lessThan(A:Int, B:Int, Out:Int):Void
     {
         program[Out] = A < B ? 1 : 0;
     }
 
-    private static function equals(A:Int, B:Int, Out:Int):Void
+    private function equals(A:Int, B:Int, Out:Int):Void
     {
         program[Out] = A == B ? 1 : 0;
     }
