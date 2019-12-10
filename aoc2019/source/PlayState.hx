@@ -10,14 +10,16 @@ import days.Day04;
 import days.Day05;
 import days.Day06;
 import days.Day07;
+import days.Day08;
+import days.Day09;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 7;
+    public static final DAYS:Int = 9;
 
     override public function create():Void
     {
-        var t:FlxText = new FlxText(10, 10, "Select a Day to Run:");
+        var t:FlxText = new FlxText(10, 10, "Select a Day to Run:", 0);
         add(t);
         for (i in 0...DAYS)
         {

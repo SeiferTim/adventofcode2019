@@ -1,5 +1,6 @@
 package days;
 
+import haxe.Int64;
 import intcode.Computer;
 import openfl.Assets;
 
@@ -25,7 +26,7 @@ class Day07 extends Day
                 comp.start([p.shift(), outSig]);
 
                 if (comp.state == Computer.STATE_FINISHED)
-                    outSig = comp.outputs[0];
+                    outSig = Int64.toInt(comp.outputs[0]);
 
                 if (outSig > highest)
                     highest = outSig;
@@ -63,7 +64,7 @@ class Day07 extends Day
 
                     if (ampComps[curComp].state == Computer.STATE_WAITING || ampComps[curComp].state == Computer.STATE_FINISHED)
                     {
-                        outSig = ampComps[curComp].outputs.pop();
+                        outSig = Int64.toInt(ampComps[curComp].outputs.pop());
                         curComp++;
                         if (curComp >= ampComps.length)
                             curComp = 0;
