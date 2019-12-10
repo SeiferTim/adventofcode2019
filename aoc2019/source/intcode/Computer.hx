@@ -7,7 +7,6 @@ using StringTools;
 class Computer
 {
     private static inline final OP_ADD:String = "01";
-
     private static inline final OP_MULTIPLY:String = "02";
     private static inline final OP_INPUT:String = "03";
     private static inline final OP_OUTPUT:String = "04";
@@ -94,31 +93,25 @@ class Computer
         modes.reverse();
 
         var params:Array<Int64> = [0, 0, 0];
+        params[0] = getParamAddress(0, modes[0]);
+        params[1] = getParamAddress(1, modes[1]);
+        params[2] = getParamAddress(2, modes[2]);
 
-        trace(pos, opcode, modes, relativeBase);
+        // trace(pos, opcode, modes, relativeBase, params, params.map(function(v) return getValue(v)));
 
         switch (opcode)
         {
             case OP_ADD:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                params[2] = getParam(2, MODE_IMMEDIATE);
-                trace(params);
                 add(params[0], params[1], params[2]);
                 pos += 4;
             case OP_MULTIPLY:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                params[2] = getParam(2, MODE_IMMEDIATE);
-                trace(params);
                 multiply(params[0], params[1], params[2]);
                 pos += 4;
             case OP_INPUT:
                 if (inputs.length > 0)
                 {
-                    params[0] = relativeBase + getParam(0, MODE_IMMEDIATE);
                     params[1] = inputs.pop();
-                    trace(params);
+
                     input(params[0], params[1]);
                     pos += 2;
                 }
@@ -128,44 +121,26 @@ class Computer
                     state = STATE_WAITING;
                 }
             case OP_OUTPUT:
-                params[0] = getParam(0, modes[0]);
-                trace(params);
                 output(params[0]);
                 pos += 2;
             case OP_JUMP_IF_TRUE:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                trace(params);
-                if (params[0] != 0)
-                    pos = params[1];
+                if (getValue(params[0]) != 0)
+                    pos = getValue(params[1]);
                 else
                     pos += 3;
             case OP_JUMP_IF_FALSE:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                trace(params);
-                if (params[0] == 0)
-                    pos = params[1];
+                if (getValue(params[0]) == 0)
+                    pos = getValue(params[1]);
                 else
                     pos += 3;
             case OP_LESS_THAN:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                params[2] = getParam(2, MODE_IMMEDIATE);
-                trace(params);
                 lessThan(params[0], params[1], params[2]);
                 pos += 4;
             case OP_EQUALS:
-                params[0] = getParam(0, modes[0]);
-                params[1] = getParam(1, modes[1]);
-                params[2] = getParam(2, MODE_IMMEDIATE);
-                trace(params);
                 equals(params[0], params[1], params[2]);
                 pos += 4;
             case OP_ADJUST_BASE:
-                params[0] = getParam(0, modes[0]);
-                trace(params);
-                relativeBase += params[0];
+                relativeBase += getValue(params[0]);
                 pos += 2;
             case OP_TERMINATE:
                 state = STATE_FINISHED;
@@ -179,52 +154,63 @@ class Computer
         }
     }
 
-    private function getParam(Which:Int, Mode:Int):Int64
+    private function getValue(Pos:Int64):Int64
     {
-        var a:Int64 = 0;
+        var v:Int64 = 0;
+        if (program.exists(Int64.toStr(Pos)))
+            v = program.get(Int64.toStr(Pos));
+        return v;
+    }
+
+    private function setValue(Pos:Int64, Value:Int64):Void
+    {
+        program.set(Int64.toStr(Pos), Value);
+    }
+
+    private function getParamAddress(Which:Int, Mode:Int):Int64
+    {
         var v:Int64 = switch (Mode)
         {
             case MODE_POSITION:
-                a = program.exists(Int64.toStr(pos + 1 + Which)) ? program.get(Int64.toStr(pos + 1 + Which)) : 0;
-                program.exists(Int64.toStr(a)) ? program.get(Int64.toStr(a)) : 0;
+                getValue(pos + 1 + Which);
             case MODE_IMMEDIATE:
-                program.exists(Int64.toStr(pos + 1 + Which)) ? program.get(Int64.toStr(pos + 1 + Which)) : 0;
+                pos + 1 + Which;
             case MODE_RELATIVE:
-                a = program.exists(Int64.toStr(pos + 1 + Which)) ? program.get(Int64.toStr(pos + 1 + Which)) : 0;
-                program.exists(Int64.toStr(a + relativeBase)) ? program.get(Int64.toStr(a + relativeBase)) : 0;
+                getValue(pos + 1 + Which) + relativeBase;
             default:
                 0;
-        };
+        }
+
         return v;
     }
 
     private function add(A:Int64, B:Int64, Out:Int64):Void
     {
-        program.set(Int64.toStr(Out), Int64.add(A, B));
+        setValue(Out, Int64.add(getValue(A), getValue(B)));
     }
 
     private function multiply(A:Int64, B:Int64, Out:Int64):Void
     {
-        program.set(Int64.toStr(Out), Int64.mul(A, B));
+        setValue(Out, Int64.mul(getValue(A), getValue(B)));
     }
 
     private function input(Out:Int64, A:Int64):Void
     {
-        program.set(Int64.toStr(Out), A);
+        setValue(Out, A);
     }
 
     private function output(A:Int64):Void
     {
-        outputs.push(A);
+        outputs.push(getValue(A));
     }
 
     private function lessThan(A:Int64, B:Int64, Out:Int64):Void
     {
-        program.set(Int64.toStr(Out), Int64.compare(A, B) < 0 ? 1 : 0);
+        setValue(Out, Int64.compare(getValue(A), getValue(B)) < 0 ? 1 : 0);
     }
 
     private function equals(A:Int64, B:Int64, Out:Int64):Void
     {
-        program.set(Int64.toStr(Out), Int64.compare(A, B) == 0 ? 1 : 0);
+        setValue(Out, Int64.compare(getValue(A), getValue(B)) == 0 ? 1 : 0);
     }
 }
