@@ -23,14 +23,14 @@ class Day06 extends Day
             orbits += follow(parent);
         }
 
-        trace('Answer for Day06: $orbits');
+        PlayState.addOutput('Answer for Day06: $orbits');
 
         chart("YOU");
         chart("SAN");
 
         var dist:Int = distance("YOU", "SAN");
 
-        trace('Answer for Day06b: $dist');
+        PlayState.addOutput('Answer for Day06b: $dist');
     }
 
     private function distance(BodyA:String, BodyB:String):Int

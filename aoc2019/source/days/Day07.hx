@@ -32,7 +32,7 @@ class Day07 extends Day
                     highest = outSig;
             }
         }
-        trace('Day 07 Answer: $highest');
+        PlayState.addOutput('Day 07 Answer: $highest');
 
         var ampComps:Array<Computer> = [];
         var curComp:Int = 0;
@@ -80,6 +80,6 @@ class Day07 extends Day
                 highest = outSig;
         }
 
-        trace('Day 07b Answer: $highest');
+        PlayState.addOutput('Day 07b Answer: $highest');
     }
 }

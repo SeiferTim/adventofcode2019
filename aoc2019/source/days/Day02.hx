@@ -24,7 +24,7 @@ class Day02 extends Day
         }
         while (pos >= 0);
 
-        trace("Day 2 Answer: " + Std.string(data[0]));
+        PlayState.addOutput("Day 2 Answer: " + Std.string(data[0]));
 
         var noun:Int = 0;
         var verb:Int = 0;
@@ -47,10 +47,10 @@ class Day02 extends Day
                 compute();
             }
             while (pos >= 0);
-            trace(noun, verb, data[0]);
+                // PlayState.addOutput(noun, verb, data[0]);
         }
         while (data[0] != 19690720);
-        trace("Day 2b Answer: " + Std.string(100 * noun + verb));
+        PlayState.addOutput("Day 2b Answer: " + Std.string(100 * noun + verb));
     }
 
     private function compute():Void

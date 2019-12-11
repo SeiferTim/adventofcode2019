@@ -17,9 +17,9 @@ class Day04 extends Day
         }
         while (Std.parseInt(checkValue) <= Std.parseInt(RANGE_END));
 
-        trace("Day 4 Answer: " + Std.string(matches.length));
+        PlayState.addOutput("Day 4 Answer: " + Std.string(matches.length));
 
-        trace(matches);
+        // PlayState.addOutput(matches);
     }
 
     private function findMatch(Value:String):Void

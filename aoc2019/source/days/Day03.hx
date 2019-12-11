@@ -47,7 +47,7 @@ class Day03 extends Day
                 }
             }
         }
-        trace("getting Intersections");
+        PlayState.addOutput("getting Intersections");
 
         var intersections:Array<String> = [];
         var distances:Array<Int> = [];
@@ -63,15 +63,15 @@ class Day03 extends Day
             }
         }
 
-        // trace(totals);
+        // PlayState.addOutput(totals);
 
         distances.sort(function(a, b):Int return a - b);
 
-        trace("Day 3 Answer: " + Std.string(distances[0]));
+        PlayState.addOutput("Day 3 Answer: " + Std.string(distances[0]));
 
         totals.sort(function(a, b):Int return a - b);
 
-        trace("Day 3b Answer: " + Std.string(totals[0]));
+        PlayState.addOutput("Day 3b Answer: " + Std.string(totals[0]));
     }
 
     private function getDistance(I:String):Int
@@ -100,7 +100,7 @@ class Day03 extends Day
 
         if (wires.exists(v))
         {
-            // trace(v, wires.get(v), Wire, wires.get(v) & Wire, steps.get(v));
+            // PlayState.addOutput(v, wires.get(v), Wire, wires.get(v) & Wire, steps.get(v));
             if (wires.get(v) & Wire > 0)
                 return;
         }
@@ -109,7 +109,7 @@ class Day03 extends Day
 
         if (steps.exists(v))
             w = steps.get(v);
-        // trace(v, w + stepTotal);
+        // PlayState.addOutput(v, w + stepTotal);
         steps.set(v, w + stepTotal);
     }
 

@@ -97,7 +97,7 @@ class Computer
         params[1] = getParamAddress(1, modes[1]);
         params[2] = getParamAddress(2, modes[2]);
 
-        // trace(pos, opcode, modes, relativeBase, params, params.map(function(v) return getValue(v)));
+        // PlayState.addOutput(pos, opcode, modes, relativeBase, params, params.map(function(v) return getValue(v)));
 
         switch (opcode)
         {

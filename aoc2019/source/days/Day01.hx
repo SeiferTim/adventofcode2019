@@ -11,7 +11,7 @@ class Day01 extends Day
         {
             fuel += calculateFuel(Std.parseInt(d));
         }
-        trace("Day 1 Answer: " + fuel + " Fuel");
+        PlayState.addOutput("Day 1 Answer: " + fuel + " Fuel");
 
         fuel = 0;
         var newFuel:Int = 0;
@@ -28,7 +28,7 @@ class Day01 extends Day
             }
             while (newFuel > 0);
         }
-        trace("Day 1b Answer: " + fuel + " Fuel");
+        PlayState.addOutput("Day 1b Answer: " + fuel + " Fuel");
     }
 
     private function calculateFuel(Amount:Int):Int

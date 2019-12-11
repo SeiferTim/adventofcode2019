@@ -53,7 +53,7 @@ class Day08 extends Day
                 numTwos++;
         }
 
-        trace("Day 08 Answer: " + Std.string(numOnes * numTwos));
+        PlayState.addOutput("Day 08 Answer: " + Std.string(numOnes * numTwos));
 
         var bmp:BitmapData = new BitmapData(WIDTH, HEIGHT, true, FlxColor.GRAY);
         var layer:Array<Int> = [];
