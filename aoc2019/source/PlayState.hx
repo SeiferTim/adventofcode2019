@@ -1,10 +1,15 @@
 package;
 
+// import flixel.addons.ui.FlxUIText;
+// import openfl.text.TextFieldType;
+// import flixel.text.FlxText;
+import flixel.FlxSprite;
+import openfl.text.TextFieldAutoSize;
 import openfl.text.TextFieldType;
 import flixel.FlxG;
 import flixel.util.FlxColor;
-import openfl.text.TextFormat;
-import openfl.text.TextField;
+// import openfl.text.TextFormat;
+// import openfl.text.TextField;
 import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.FlxState;
@@ -20,15 +25,18 @@ import days.Day09;
 import days.Day10;
 import days.Day11;
 import days.Day12;
+import days.Day13;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 12;
+    public static final DAYS:Int = 13;
 
-    private static var txtField:TextField;
+    private static var txtField:MyScrollText;
 
     override public function create():Void
     {
+        FlxG.autoPause = false;
+
         var t:FlxText = new FlxText(10, 10, "Select a Day to Run:");
         add(t);
         for (i in 0...DAYS)
@@ -36,33 +44,18 @@ class PlayState extends FlxState
             addDayButton(i);
         }
 
-        var tSX:Float = FlxG.game.width / FlxG.width;
-        var tSY:Float = FlxG.game.height / FlxG.height;
+        txtField = new MyScrollText(10, FlxG.height - 120, FlxG.width - 20, 110);
 
-        txtField = new TextField();
+        var back:FlxSprite = new FlxSprite(txtField.x - 1, txtField.y - 1);
+        back.makeGraphic(Std.int(txtField.width + 2), Std.int(txtField.height + 2), FlxColor.WHITE);
+        add(back);
 
-        txtField.embedFonts = true;
-        txtField.defaultTextFormat = new TextFormat(t.font, Std.int(8 * tSY), FlxColor.WHITE);
-        txtField.x = 10 * tSX;
-        txtField.y = FlxG.height - (210 * tSY);
-        txtField.width = FlxG.width - (20 * tSX);
-        txtField.height = 200 * tSY;
-        txtField.type = TextFieldType.DYNAMIC;
-        txtField.multiline = true;
-        txtField.wordWrap = true;
-        txtField.border = true;
-        txtField.borderColor = FlxColor.GRAY;
-        txtField.backgroundColor = FlxColor.BLACK;
-        txtField.selectable = true;
-        FlxG.addChildBelowMouse(txtField);
-
-        txtField.scrollV = txtField.maxScrollV;
+        add(txtField);
     }
 
     public static function addOutput(Message:String = ""):Void
     {
         txtField.text += '$Message\n';
-        txtField.scrollV = txtField.maxScrollV;
     }
 
     override public function update(elapsed:Float):Void

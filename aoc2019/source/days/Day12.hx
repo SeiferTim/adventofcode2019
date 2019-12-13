@@ -102,7 +102,6 @@ class Day12 extends Day
     private function computeGravity(M1:Moon, M2:Moon):Void
     {
         M1.velocity.x += gravityChange(M1.position.x, M2.position.x);
-
         M1.velocity.y += gravityChange(M1.position.y, M2.position.y);
         M1.velocity.z += gravityChange(M1.position.z, M2.position.z);
 

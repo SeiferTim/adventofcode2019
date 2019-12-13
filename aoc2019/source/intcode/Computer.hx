@@ -87,7 +87,7 @@ class Computer
 
     private function readInstruction():Void
     {
-        var inst:String = Int64.toStr(program.get(Int64.toStr(pos))).lpad("0", 5);
+        var inst:String = getInstruction();
         var opcode:String = inst.substr(-2, 2);
         var modes:Array<Int> = inst.substr(0, 3).split("").map(function(v) return Std.parseInt(v));
         modes.reverse();
@@ -108,7 +108,7 @@ class Computer
                 multiply(params[0], params[1], params[2]);
                 pos += 4;
             case OP_INPUT:
-                if (inputs.length > 0)
+                if (inputs != null && inputs.length > 0)
                 {
                     params[1] = inputs.pop();
 
@@ -154,6 +154,14 @@ class Computer
         }
     }
 
+    private function getInstruction():String
+    {
+        var inst:Int64 = 0;
+        if (program.exists(Int64.toStr(pos)))
+            inst = program.get(Int64.toStr(pos));
+        return Int64.toStr(inst).lpad("0", 5);
+    }
+
     private function getValue(Pos:Int64):Int64
     {
         var v:Int64 = 0;
@@ -162,7 +170,7 @@ class Computer
         return v;
     }
 
-    private function setValue(Pos:Int64, Value:Int64):Void
+    public function setValue(Pos:Int64, Value:Int64):Void
     {
         program.set(Int64.toStr(Pos), Value);
     }
