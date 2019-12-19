@@ -1,5 +1,7 @@
 package intcode;
 
+import flixel.util.FlxSort;
+import haxe.Int64Helper;
 import haxe.Int64;
 
 using StringTools;
@@ -41,10 +43,10 @@ class Computer
 
     private var relativeBase:Int64 = 0;
 
-    public function new(Program:String)
+    public function new(Program:String, ?Pos:Int64, ?InitialState:Int = STATE_ERROR, ?RelativeBase:Int64)
     {
         originalProgram = Program;
-        reset();
+        reset(false, Pos, InitialState, RelativeBase);
     }
 
     private function mainLoop():Void
@@ -57,7 +59,7 @@ class Computer
         while (pos >= 0 && !stop);
     }
 
-    public function reset(?KeepChangedProgram = false):Void
+    public function reset(?KeepChangedProgram = false, ?Pos:Int64, ?InitialState:Int = STATE_ERROR, ?RelativeBase:Int64):Void
     {
         if (!KeepChangedProgram)
         {
@@ -70,9 +72,9 @@ class Computer
         }
 
         outputs = [];
-        pos = 0;
-        relativeBase = 0;
-        state = STATE_READY;
+        pos = Pos == null ? Int64.ofInt(0) : Pos;
+        relativeBase = RelativeBase == null ? Int64.ofInt(0) : RelativeBase;
+        state = InitialState;
     }
 
     public function start(?Inputs:Array<Int64> = null):Void
@@ -220,5 +222,27 @@ class Computer
     private function equals(A:Int64, B:Int64, Out:Int64):Void
     {
         setValue(Out, Int64.compare(getValue(A), getValue(B)) == 0 ? 1 : 0);
+    }
+
+    public function clone():Computer
+    {
+        return new Computer(codeToString(), pos, state, relativeBase);
+    }
+
+    private function codeToString():String
+    {
+        var s:Array<Int64> = [];
+        var keys = [for (key in program.keys()) key];
+        keys.sort(sortByValue);
+        for (k in keys)
+        {
+            s.push(program.get(k));
+        }
+        return s.join(",");
+    }
+
+    private function sortByValue(A:String, B:String):Int
+    {
+        return FlxSort.byValues(FlxSort.ASCENDING, Std.parseFloat(A), Std.parseFloat(B));
     }
 }

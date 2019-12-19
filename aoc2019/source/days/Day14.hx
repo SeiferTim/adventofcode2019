@@ -7,10 +7,7 @@ import openfl.Assets;
 
 class Day14 extends Day
 {
-    // private var ALLOW_DRILL:Bool = true;
-    // private var oreCollected:Int64 = 0;
     private var formulas:Map<String, Formula> = [];
-    // private var stockpile:Map<String, Int64> = [];
     private var formulasByDepth:Array<Formula> = [];
 
     private var used:Array<Int64>;
