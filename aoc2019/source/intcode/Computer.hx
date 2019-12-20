@@ -43,7 +43,7 @@ class Computer
 
     private var relativeBase:Int64 = 0;
 
-    public function new(Program:String, ?Pos:Int64, ?InitialState:Int = STATE_ERROR, ?RelativeBase:Int64)
+    public function new(Program:String, ?Pos:Int64, ?InitialState:Int = STATE_READY, ?RelativeBase:Int64)
     {
         originalProgram = Program;
         reset(false, Pos, InitialState, RelativeBase);
@@ -112,7 +112,7 @@ class Computer
             case OP_INPUT:
                 if (inputs != null && inputs.length > 0)
                 {
-                    params[1] = inputs.pop();
+                    params[1] = inputs.shift();
 
                     input(params[0], params[1]);
                     pos += 2;

@@ -28,10 +28,12 @@ import days.Day12;
 import days.Day13;
 import days.Day14;
 import days.Day15;
+import days.Day16;
+import days.Day17;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 15;
+    public static final DAYS:Int = 17;
 
     private static var txtField:MyScrollText;
 
@@ -58,6 +60,7 @@ class PlayState extends FlxState
     public static function addOutput(Message:String = ""):Void
     {
         txtField.text += '$Message\n';
+        trace('$Message\n');
     }
 
     override public function update(elapsed:Float):Void

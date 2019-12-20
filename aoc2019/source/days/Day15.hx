@@ -177,13 +177,7 @@ class Day15SubState extends FlxSubState
             PlayState.addOutput(s);
             trace(s);
             stop = true; // we have the whole map at this point?! check how long it takes to fill with O2
-            var timeToFill:Int = parent.calculateDistances() * 4;
-
-            // parent.distances.sort(sortByValue);
-
-            // trace(parent.distances);
-
-            // var timeToFill:Int = parent.distances[0] * 4;
+            var timeToFill:Int = parent.calculateDistances();
             s = 'Day 15b Time to Fill $timeToFill min';
             PlayState.addOutput(s);
             trace(s);
@@ -385,6 +379,7 @@ class Robot extends FlxSprite
                 default:
                     0;
             }
+            var tmpLoc:FlxPoint = newLocation.copyTo();
             for (i in 1...5)
             {
                 if (revDir != i)
