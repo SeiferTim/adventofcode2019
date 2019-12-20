@@ -30,10 +30,11 @@ import days.Day14;
 import days.Day15;
 import days.Day16;
 import days.Day17;
+import days.Day18;
 
 class PlayState extends FlxState
 {
-    public static final DAYS:Int = 17;
+    public static final DAYS:Int = 18;
 
     private static var txtField:MyScrollText;
 
