@@ -39,17 +39,19 @@ class Day18 extends Day
 
     override public function start():Void
     {
-        loadMap("assets/data/day18.txt");
-
-        /// find shortest route
-
         var dist:Int = 0;
+
+        // loadMap("assets/data/day18.txt");
+        // getRoutes();
+        // // trace(routes);
+        // dist = distanceToCollectKeys(["1"]);
+        // PlayState.addOutput('Day 18 Answer: $dist');
+
+        dist = 0;
+        loadMap("assets/data/day18b.txt");
         getRoutes();
-        // trace(routes);
-
-        dist = distanceToCollectKeys("1");
-
-        PlayState.addOutput('Day 18 Answer: $dist');
+        dist = distanceToCollectKeys(["1", "2", "3", "4"]);
+        PlayState.addOutput('Day 18b Answer: $dist');
 
         // var ss:Day18SubState = new Day18SubState(map, this);
 
@@ -143,52 +145,56 @@ class Day18 extends Day
         return true;
     }
 
-    private function distanceToCollectKeys(From:String, ?Collected:Array<String>):Int
+    private function distanceToCollectKeys(From:Array<String>, ?Collected:Array<String>):Int
     {
         if (Collected == null)
             Collected = [];
 
-        // trace(From, Collected);
-        var result:Int = mapWidth * mapHeight * 4;
-        result = mapWidth * mapHeight * 4;
-        var cacheKey:String = getCacheKey(From, Collected);
+        var best:Int = mapWidth * mapHeight * 4;
+
+        var cacheKey:String = getCacheKey(From.join(""), Collected);
         if (cache.exists(cacheKey))
         {
-            result = cache.get(cacheKey);
+            best = cache.get(cacheKey);
         }
         else
         {
-            var d:Int = 0;
-            /// if we have no more keys we can get to, return 0
-            if (Collected.length >= [for (k in keys.keys()) k].length)
+            for (whichBot in 0...From.length)
             {
-                result = 0;
-            }
-            else
-            {
-                for (r in routes)
+                var result:Int = mapWidth * mapHeight * 4;
+
+                var d:Int = 0;
+                /// if we have no more keys we can get to, return 0
+                if (Collected.length >= [for (k in keys.keys()) k].length)
                 {
-                    if (r.startKey == From && Collected.indexOf(r.endKey) == -1)
+                    result = 0;
+                }
+                else
+                {
+                    for (r in routes)
                     {
-                        // trace(r.endKey, r.keysNeeds);
-                        if (haveAllNeededKeys(r.keysNeeds, Collected))
+                        if (r.startKey == From[whichBot] && Collected.indexOf(r.endKey) == -1)
                         {
-                            d = r.distance + distanceToCollectKeys(r.endKey, Collected.concat([r.endKey]));
-                            result = FlxMath.minInt(result, d);
+                            if (haveAllNeededKeys(r.keysNeeds, Collected))
+                            {
+                                d = r.distance
+                                    + distanceToCollectKeys([for (i in 0...From.length) (i == whichBot) ?r.endKey:From[i]], Collected.concat([r.endKey]));
+                                if (d < result)
+                                {
+                                    result = d;
+                                }
+                            }
                         }
                     }
                 }
-                /// if we are 'stuck' because of doors, return the largest number
-                // var reachable:Array<Node> = getReachableKeys(From, Collected);
-                // for (k in reachable)
-                // {
-                //     d = k.distance + distanceToCollectKeys(k.name, Collected.concat([k.name]));
-                //     result = FlxMath.minInt(result, d);
-                // }
+                if (result < best)
+                {
+                    best = result;
+                }
             }
-            cache.set(cacheKey, result);
         }
-        return result;
+        cache.set(cacheKey, best);
+        return best;
     }
 
     private function findPath(Start:String, End:String):Route
