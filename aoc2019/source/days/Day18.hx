@@ -1,5 +1,6 @@
 package days;
 
+import flixel.math.FlxMath;
 import flixel.util.FlxArrayUtil;
 import flixel.tile.FlxBaseTilemap.FlxTilemapDiagonalPolicy;
 import flixel.math.FlxPoint;
@@ -18,8 +19,9 @@ import openfl.Assets;
 
 class Day18 extends Day
 {
-    private var playerStart:Int;
+    private var playerStarts:Array<Int> = [];
     private var keys:Map<String, Int> = [];
+    private var doors:Map<Int, String> = [];
     private var map:FlxTilemap;
 
     private var steps:Int = 0;
@@ -28,15 +30,60 @@ class Day18 extends Day
     private var mapHeight:Int = -1;
 
     private var mapData:Array<Int> = [];
-    private var path:Array<Node> = [];
+
+    private var routes:Array<Route> = [];
 
     private var cache:Map<String, Int> = [];
 
+    private var pathTaken:Array<String> = [];
+
     override public function start():Void
+    {
+        loadMap("assets/data/day18.txt");
+
+        /// find shortest route
+
+        var dist:Int = 0;
+        getRoutes();
+        // trace(routes);
+
+        dist = distanceToCollectKeys("1");
+
+        PlayState.addOutput('Day 18 Answer: $dist');
+
+        // var ss:Day18SubState = new Day18SubState(map, this);
+
+        // FlxG.state.openSubState(ss);
+    }
+
+    private function getRoutes():Void
+    {
+        var from:Array<String> = [for (k in keys.keys()) k];
+        var to:Array<String> = from.copy();
+        for (i in 0...playerStarts.length)
+            from.unshift(Std.string(i + 1));
+        var r:Route = null;
+        for (f in from)
+        {
+            for (t in to)
+            {
+                if (t != f)
+                {
+                    r = findPath(f, t);
+                    if (r != null)
+                    {
+                        routes.push(r);
+                    }
+                }
+            }
+        }
+    }
+
+    private function loadMap(DataPath:String):Void
     {
         var tiles:BitmapData = makeTiles();
 
-        var input:Array<Array<String>> = Assets.getText("assets/data/day18.txt").split("\r\n").map(function(v) return v.split(""));
+        var input:Array<Array<String>> = Assets.getText(DataPath).split("\r\n").map(function(v) return v.split(""));
 
         mapWidth = input[0].length;
         mapHeight = input.length;
@@ -68,88 +115,241 @@ class Day18 extends Day
         for (n in 0...mapData.length)
         {
             if (mapData[n] == 1)
-                playerStart = n;
+                playerStarts.push(n);
             else if (mapData[n] >= 2 && mapData[n] <= 28)
                 keys.set(String.fromCharCode(mapData[n] - 2 + "a".charCodeAt(0)), n);
-            // else if (mapData[n] >= 31)
-            // {
-            //     doors.set(String.fromCharCode(mapData[n] - 31 + "A".charCodeAt(0)), n);
-            // }
+            else if (mapData[n] >= 31)
+                doors.set(n, String.fromCharCode(mapData[n] - 31 + "A".charCodeAt(0)));
         }
 
         map = new FlxTilemap();
         map.loadMapFromArray(mapData, mapWidth, mapHeight, tiles, 10, 10, FlxTilemapAutoTiling.OFF, 0, 0, 30);
-
-        /// find shortest route
-
-        var dist:Int = shortestPath("@", [], 0);
-
-        trace(dist);
-
-        var ss:Day18SubState = new Day18SubState(map, this);
-
-        FlxG.state.openSubState(ss);
     }
 
-    private function shortestPath(From:String, Visited:Array<String>, Distance:Int):Int
+    private function getCacheKey(From:String, Collected:Array<String>):String
     {
-        if (steps % 100==0)
-            trace('steps: $steps');
-        steps++;
+        var c:Array<String> = Collected.copy();
+        c.sort(function(A, B) return A.charCodeAt(0) - B.charCodeAt(0));
+        return From + ":" + c.join("");
+    }
 
-        var visited:Array<String> = Visited.copy().concat([From]);
-        visited.sort(function(A, B) return A.charCodeAt(0) - B.charCodeAt(0));
-
-        var neighbors:Array<Node> = [];
-
-        var cacheName:String = From + ":" + visited.join("");
-
-        //        trace(cacheName);
-
-        var c:Int = 0;
-        if (cache.exists(cacheName))
+    private function haveAllNeededKeys(Needed:Array<String>, Collected:Array<String>):Bool
+    {
+        for (n in Needed)
         {
-            c = cache.get(cacheName);
-            // trace('pulled from cache: $c');
+            if (Collected.indexOf(n.toLowerCase()) == -1)
+                return false;
+        }
+        return true;
+    }
+
+    private function distanceToCollectKeys(From:String, ?Collected:Array<String>):Int
+    {
+        if (Collected == null)
+            Collected = [];
+
+        // trace(From, Collected);
+        var result:Int = mapWidth * mapHeight * 4;
+        result = mapWidth * mapHeight * 4;
+        var cacheKey:String = getCacheKey(From, Collected);
+        if (cache.exists(cacheKey))
+        {
+            result = cache.get(cacheKey);
         }
         else
         {
-            var dists:Array<Int> = [];
-            for (k => n in keys) // for every key...
+            var d:Int = 0;
+            /// if we have no more keys we can get to, return 0
+            if (Collected.length >= [for (k in keys.keys()) k].length)
             {
-                if (k != From && visited.indexOf(k) == -1) // .. if it's not the key we're on, and we haven't visited it before...
-                {
-                    dists = computePathDistance(From == "@" ? playerStart : keys.get(From), n, visited);
-                    if (dists != null)
-                    {
-                        neighbors.push(new Node(k, dists[n], From));
-                    }
-                }
-            }
-
-            if (neighbors.length == 0)
-            {
-                c = 0;
+                result = 0;
             }
             else
             {
-                var best:Int = -1;
-                var t:Int = 0;
-                for (n in neighbors)
+                for (r in routes)
                 {
-                    t = shortestPath(n.name, visited, n.distance);
-                    if (t < best || best == -1)
-                        best = t;
+                    if (r.startKey == From && Collected.indexOf(r.endKey) == -1)
+                    {
+                        // trace(r.endKey, r.keysNeeds);
+                        if (haveAllNeededKeys(r.keysNeeds, Collected))
+                        {
+                            d = r.distance + distanceToCollectKeys(r.endKey, Collected.concat([r.endKey]));
+                            result = FlxMath.minInt(result, d);
+                        }
+                    }
                 }
-                c = (best > -1 ? best : 0);
+                /// if we are 'stuck' because of doors, return the largest number
+                // var reachable:Array<Node> = getReachableKeys(From, Collected);
+                // for (k in reachable)
+                // {
+                //     d = k.distance + distanceToCollectKeys(k.name, Collected.concat([k.name]));
+                //     result = FlxMath.minInt(result, d);
+                // }
             }
-
-            cache.set(cacheName, c);
+            cache.set(cacheKey, result);
         }
-        return c + Distance;
+        return result;
     }
 
-    private function computePathDistance(StartIndex:Int, EndIndex:Int, KeysCollected:Array<String>):Array<Int>
+    private function findPath(Start:String, End:String):Route
+    {
+        // Figure out what tile we are starting and ending on.
+        var startIndex:Int = Start >= "a" && Start <= "z" ? keys.get(Start) : playerStarts[Std.parseInt(Start) - 1];
+        var endIndex:Int = End >= "a" && End <= "z" ? keys.get(End) : playerStarts[Std.parseInt(End) - 1];
+
+        // Check if any point given is outside the tilemap
+        if ((startIndex < 0) || (endIndex < 0))
+            return null;
+
+        // Figure out how far each of the tiles is from the starting tile
+        var distances:Array<Int> = computePathDistance(startIndex, endIndex);
+
+        if (distances == null)
+        {
+            return null;
+        }
+
+        // Then count backward to find the shortest path.
+        var points:Array<Int> = [];
+        walkPath(distances, endIndex, points);
+
+        // Reset the start and end points to be exact
+        var node:Int;
+        // node = points[points.length - 1];
+        // node.copyFrom(Start);
+        // node = points[0];
+        // node.copyFrom(End);
+
+        // // Some simple path cleanup options
+        // if (Simplify)
+        // {
+        //     simplifyPath(points);
+        // }
+        // if (RaySimplify)
+        // {
+        //     raySimplifyPath(points);
+        // }
+
+        // Finally load the remaining points into a new path object and return it
+        var path:Array<Int> = [];
+        var i:Int = points.length - 1;
+
+        while (i >= 0)
+        {
+            node = points[i--];
+
+            if (node != null)
+            {
+                path.push(node);
+            }
+        }
+
+        var keysNeeded:Array<String> = [];
+        for (n in path)
+        {
+            if (doors.exists(n))
+                keysNeeded.push(doors.get(n));
+        }
+
+        var route:Route = new Route(Start, End, distances[endIndex], keysNeeded);
+        return route;
+    }
+
+    private function walkPath(Data:Array<Int>, Start:Int, Points:Array<Int>):Void
+    {
+        Points.push(Start);
+
+        if (Data[Start] == 0)
+        {
+            return;
+        }
+
+        // Basic map bounds
+        var left:Bool = (Start % map.widthInTiles) > 0;
+        var right:Bool = (Start % map.widthInTiles) < (map.widthInTiles - 1);
+        var up:Bool = (Start / map.widthInTiles) > 0;
+        var down:Bool = (Start / map.widthInTiles) < (map.heightInTiles - 1);
+
+        var current:Int = Data[Start];
+        var i:Int;
+
+        if (up)
+        {
+            i = Start - map.widthInTiles;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (right)
+        {
+            i = Start + 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (down)
+        {
+            i = Start + map.widthInTiles;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (left)
+        {
+            i = Start - 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (up && right)
+        {
+            i = Start - map.widthInTiles + 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (right && down)
+        {
+            i = Start + map.widthInTiles + 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (left && down)
+        {
+            i = Start + map.widthInTiles - 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+        if (up && left)
+        {
+            i = Start - map.widthInTiles - 1;
+
+            if (i >= 0 && (Data[i] >= 0) && (Data[i] < current))
+            {
+                return walkPath(Data, i, Points);
+            }
+        }
+
+        return;
+    }
+
+    private function computePathDistance(StartIndex:Int, EndIndex:Int):Array<Int>
     {
         // Create a distance-based representation of the tilemap.
         // All walls are flagged as -2, all open areas as -1.
@@ -157,12 +357,9 @@ class Day18 extends Day
         var distances:Array<Int> = new Array<Int>( /*mapSize*/);
         FlxArrayUtil.setLength(distances, mapSize);
         var i:Int = 0;
-
         while (i < mapSize)
         {
-            if (mapData[i] == 30
-                || mapData[i] > 30
-                && KeysCollected.indexOf(String.fromCharCode(mapData[i] - 31 + "a".charCodeAt(0))) == -1)
+            if (mapData[i] == 30)
             {
                 distances[i] = -2;
             }
@@ -172,7 +369,6 @@ class Day18 extends Day
             }
             i++;
         }
-
         distances[StartIndex] = 0;
         var distance:Int = 1;
         var neighbors:Array<Int> = [StartIndex];
@@ -184,37 +380,30 @@ class Day18 extends Day
         var down:Bool;
         var currentLength:Int;
         var foundEnd:Bool = false;
-
         while (neighbors.length > 0)
         {
             current = neighbors;
             neighbors = new Array<Int>();
-
             i = 0;
             currentLength = current.length;
             while (i < currentLength)
             {
                 currentIndex = current[i++];
-
                 if (currentIndex == Std.int(EndIndex))
                 {
                     foundEnd = true;
                     neighbors = [];
                     break;
                 }
-
                 // Basic map bounds
                 left = currentIndex % mapWidth > 0;
                 right = currentIndex % mapWidth < mapWidth - 1;
                 up = currentIndex / mapWidth > 0;
                 down = currentIndex / mapWidth < mapWidth - 1;
-
                 var index:Int;
-
                 if (up)
                 {
                     index = currentIndex - mapWidth;
-
                     if (distances[index] == -1)
                     {
                         distances[index] = distance;
@@ -224,7 +413,6 @@ class Day18 extends Day
                 if (right)
                 {
                     index = currentIndex + 1;
-
                     if (distances[index] == -1)
                     {
                         distances[index] = distance;
@@ -234,7 +422,6 @@ class Day18 extends Day
                 if (down)
                 {
                     index = currentIndex + mapWidth;
-
                     if (distances[index] == -1)
                     {
                         distances[index] = distance;
@@ -244,7 +431,6 @@ class Day18 extends Day
                 if (left)
                 {
                     index = currentIndex - 1;
-
                     if (distances[index] == -1)
                     {
                         distances[index] = distance;
@@ -252,32 +438,13 @@ class Day18 extends Day
                     }
                 }
             }
-
             distance++;
         }
         if (!foundEnd)
         {
             distances = null;
         }
-
         return distances;
-    }
-
-    private function getClosestNode(Nodes:Array<Node>):String
-    {
-        var d:Int = 99999;
-        var best:Node = null;
-        for (n in Nodes)
-        {
-            if (n.distance < d)
-            {
-                d = n.distance;
-                best = n;
-            }
-        }
-        steps += d;
-        path.push(best);
-        return best.name;
     }
 
     private function makeTiles():BitmapData
@@ -380,10 +547,21 @@ class Day18SubState extends FlxSubState
 
     override public function create():Void
     {
+        var scale:Float = Math.min(1, Math.min((FlxG.width - 10) / map.width, (FlxG.height - 10) / map.height));
+        map.scale.set(scale, scale);
+
         map.screenCenter(FlxAxes.XY);
         add(map);
 
         super.create();
+    }
+
+    override public function update(elapsed:Float):Void
+    {
+        super.update(elapsed);
+
+        if (FlxG.keys.anyJustReleased([ESCAPE]))
+            close();
     }
 }
 
@@ -398,5 +576,21 @@ class Node
         name = Name;
         distance = Distance;
         parent = Parent;
+    }
+}
+
+class Route
+{
+    public var startKey:String = "";
+    public var endKey:String = "";
+    public var keysNeeds:Array<String> = [];
+    public var distance:Int = 0;
+
+    public function new(Start:String, End:String, Distance:Int, Keys:Array<String>)
+    {
+        startKey = Start;
+        endKey = End;
+        distance = Distance;
+        keysNeeds = Keys;
     }
 }

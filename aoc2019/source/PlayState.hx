@@ -81,6 +81,9 @@ class PlayState extends FlxState
     {
         var cName:String = "days.Day" + StringTools.lpad(Std.string(Number + 1), "0", 2);
         var day:Day = Type.createInstance(Type.resolveClass(cName), []);
+
+        var time:Float = Sys.time();
         day.start();
+        addOutput("Time taken: " + Std.string(Sys.time() - time) + "s");
     }
 }
