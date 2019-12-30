@@ -39,15 +39,13 @@ class Day18 extends Day
 
     override public function start():Void
     {
-        var dist:Int = 0;
-
         // loadMap("assets/data/day18.txt");
         // getRoutes();
         // // trace(routes);
         // dist = distanceToCollectKeys(["1"]);
         // PlayState.addOutput('Day 18 Answer: $dist');
 
-        dist = 0;
+        var dist:Int = 0;
         loadMap("assets/data/day18b.txt");
         getRoutes();
         dist = distanceToCollectKeys(["1", "2", "3", "4"]);
@@ -592,7 +590,7 @@ class Route
     public var keysNeeds:Array<String> = [];
     public var distance:Int = 0;
 
-    public function new(Start:String, End:String, Distance:Int, Keys:Array<String>)
+    public function new(Start:String, End:String, Distance:Int, ?Keys:Array<String>)
     {
         startKey = Start;
         endKey = End;
