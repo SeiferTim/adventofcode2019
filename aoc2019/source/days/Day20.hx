@@ -1,5 +1,7 @@
 package days;
 
+import flixel.math.FlxMath;
+import flixel.util.FlxSort;
 import flixel.util.FlxArrayUtil;
 import flixel.FlxG;
 import flixel.util.FlxColor;
@@ -14,32 +16,32 @@ import flixel.tile.FlxTilemap;
 
 class Day20 extends Day
 {
-    private var playerStarts:Array<Int> = [];
     private var portals:Map<String, Int> = [];
     private var map:FlxTilemap;
     private var mapWidth:Int = -1;
     private var mapHeight:Int = -1;
     private var mapData:Array<Int> = [];
     private var routes:Array<Day20Route> = [];
+
+    private var portalCount:Int = 0;
+    private var iterations:Int = 0;
+
     private var cache:Map<String, Int> = [];
-    private var pathTaken:Array<String> = [];
+
+    private var shortestPaths:Map<String, Int> = [];
 
     override public function start():Void
     {
         var steps:Int = 0;
-        loadMap("assets/data/day20a.txt");
+        loadMap("assets/data/day20f.txt");
 
         getRoutes("Z");
 
-        // trace(routes);
-        steps = distanceToExit("A", "Z");
-        // var path:Array<String> = BFS("A", "Z");
-        // trace(path);
-        // for (p in 1...path.length)
-        // {
-        //     steps += getRoute(path[p - 1], path[p]).length;
-        // }
-        PlayState.addOutput('Day 20 Answer: $steps');
+        // steps = distanceToExit("A", "Z");
+        // PlayState.addOutput('Day 20 Answer: $steps');
+
+        steps = distanceToExitR("A", "Z");
+        PlayState.addOutput('Day 20b Answer: $steps');
     }
 
     private function getRoute(From:String, To:String):Day20Route
@@ -50,39 +52,46 @@ class Day20 extends Day
         return null;
     }
 
-    private function BFS(From:String, To:String):Array<String>
+    private function getRouteByLevel(LevelFrom:Int, LevelTo:Int, From:String, To:String):Day20Route
     {
-        var queue:Array<String> = [];
-        var visited:Array<String> = [];
-        var best:Day20Route = null;
-        queue.push(From);
+        if (LevelFrom == 0 && From != "A" && !(To >= "a" && To <= "~"))
+            return null;
+        if (LevelTo == 0 && To != "Z" && !(From >= "a" && From <= "~"))
+            return null;
+        if (LevelTo != 0 && To == "Z")
+            return null;
+        if (LevelFrom != 0 && From == "A")
+            return null;
 
-        while (true)
+        var diff:Int = LevelTo - LevelFrom;
+
+        if (diff == 0 && From == otherEnd(To))
+            return null;
+        if (diff != 0 && From != otherEnd(To))
+            return null;
+
+        for (r in routes)
         {
-            var f:String = queue.shift();
-            visited.push(f);
-            if (f == To)
-            {
-                // trace(visited);
-                break; // return f.len;
-            }
-            best = new Day20Route("", "", 999999);
-            for (r in routes.filter(function(v) return v.startKey == f && visited.indexOf(v.endKey) == -1))
-            {
-                if (r.length < best.length)
-                {
-                    best = r;
-                }
-                // trace(f, r);
-            }
-            queue.push(best.endKey);
+            // if (LevelFrom == 0 && (r.startKey != "A" && r.startKey != "Z" && r.startKey >= "A" && r.startKey <= "^"))
+            //     continue;
+            // if (LevelTo == 0 && (r.endKey != "A" && r.endKey != "Z" && r.endKey <= "a" && r.startKey >= "~"))
+            //     continue;
+            // if (diff == 0 && r.startKey == otherEnd(r.endKey))
+            //     continue;
+            // if (diff != 0 && r.startKey != otherEnd(r.endKey))
+            //     continue;
+            // if (LevelFrom != 0 && (r.startKey == "A" || r.startKey == "Z"))
+            //     continue;
+            // if (LevelTo != 0 && (r.endKey == "A" || r.endKey == "Z"))
+            //     continue;
+            if (r.startKey == From && r.endKey == To)
+                return r;
         }
-        return visited;
+        return null;
     }
 
     private function getRoutes(End:String = "Z"):Void
     {
-        trace(portals);
         var from:Array<String> = [for (k in portals.keys()) k];
         var to:Array<String> = from.copy();
         var r:Day20Route = null;
@@ -94,60 +103,13 @@ class Day20 extends Day
                 {
                     r = findPath(f, t);
 
-                    if (f == "~" || t == "~" || f == "^" || t == "^" || f == "t" || t == "t")
-                        trace(r);
                     if (r != null)
                         routes.push(r);
                 }
             }
         }
 
-        // var removedDeadEnd:Bool = false;
-        // do
-        // {
-        //     removedDeadEnd = false;
-        //     for (r1 in routes)
-        //     {
-        //         if (r1.endKey != End)
-        //         {
-        //             var count:Int = 0;
-        //             for (r2 in routes)
-        //             {
-        //                 if (r2.startKey == r1.endKey)
-        //                 {
-        //                     count++;
-        //                 }
-        //             }
-        //             if (count == 0)
-        //             {
-        //                 removedDeadEnd = true;
-        //                 routes.remove(r1);
-        //             }
-        //         }
-        //     }
-        //     trace(removedDeadEnd);
-        // }
-        // while (removedDeadEnd);
-
-        // do
-        // {
-        //     removedDeadEnd = false;
-        //     for (r1 in routes)
-        //     {
-        //         for (r2 in routes)
-        //         {
-        //             if (r2 != r1 && r2.startKey == r1.startKey && r2.endKey == r1.endKey && r2.length >= r1.length)
-        //             {
-        //                 removedDeadEnd = true;
-        //                 routes.remove(r2);
-        //             }
-        //         }
-        //     }
-        //     trace(removedDeadEnd);
-        // }
-        // while (removedDeadEnd);
-
-        trace(routes);
+        // trace(routes);
     }
 
     private function getCacheKey(From:String, Collected:Array<String>):String
@@ -157,57 +119,171 @@ class Day20 extends Day
         return From + ":" + c.join("");
     }
 
-    private function distanceToExit(From:String, End:String, ?WasPortal:Bool = false, ?Taken:Array<String>):Int
+    private function distanceToExitdistanceToExit(From:String, End:String, ?WasPortal:Bool = false, ?Taken:Array<String>):Int
     {
-        if (Taken == null)
-            Taken = [];
+        var maxDist:Int = mapWidth * mapHeight * 100;
 
-        // trace(From, End, WasPortal, Taken);
+        var r:Day20Route = null;
 
-        var result:Int = mapWidth * mapHeight * 10;
-        var d:Int = 0;
-        /// if we have no more keys we can get to, return 0
-        if (From == End)
+        for (k in portals.keys())
         {
-            trace(Taken.concat(["Z"]));
-            result = 0;
-        }
-        else
-        {
-            for (r in routes)
+            for (i in portals.keys())
             {
-                // trace(WasPortal, r.endKey, otherEnd(r.startKey));
-                if (r.startKey == From
-                    && ((WasPortal && r.endKey == otherEnd(r.startKey)) || (!WasPortal && r.endKey != otherEnd(r.startKey)))
-                    && Taken.indexOf(r.endKey) == -1) //
+                for (j in portals.keys())
                 {
-                    // trace(r.startKey + " -> " + r.endKey);
-                    // var cacheKey:String = getCacheKey(r.startKey + "->" + r.endKey, Taken);
-                    // // PlayState.addOutput(cacheKey);
-                    // if (cache.exists(cacheKey))
-                    //     result = cache.get(cacheKey);
-                    // else
-                    // {
-                    // if (r.endKey == "Z")
-                    //     d = 0;
-                    // else
-                    d = r.length + distanceToExit(r.endKey, End, !WasPortal, addKey(Taken, r.startKey));
-                    if (d < result)
+                    var ij:Int = maxDist;
+                    var ik:Int = maxDist;
+                    var kj:Int = maxDist;
+                    if (shortestPaths.exists('$i>$j'))
                     {
-                        result = d;
+                        ij = shortestPaths.get('$i>$j');
                     }
-                    //     cache.set(cacheKey, d);
-                    // }
+                    else
+                    {
+                        r = getRoute(i, j);
+                        if (r != null)
+                            ij = r.length;
+                    }
+                    if (shortestPaths.exists('$i>$k'))
+                    {
+                        ik = shortestPaths.get('$i>$k');
+                    }
+                    else
+                    {
+                        r = getRoute(i, k);
+                        if (r != null)
+                            ik = r.length;
+                    }
+                    if (shortestPaths.exists('$k>$j'))
+                    {
+                        kj = shortestPaths.get('$k>$j');
+                    }
+                    else
+                    {
+                        r = getRoute(k, j);
+                        if (r != null)
+                            kj = r.length;
+                    }
+
+                    if (ij != maxDist || ik != maxDist || kj != maxDist)
+                        shortestPaths.set('$i>$j', FlxMath.minInt(ij, ik + kj));
                 }
             }
         }
-        // trace(result);
-        return result;
+
+        return shortestPaths.get('$From>$End');
+    }
+
+    private function distanceToExitR(From:String, End:String, ?Taken:Array<String>, ?WasPortal:Bool = false, ?Level:Int = 0, ?Iterations:Int = 0):Int // ?
+    {
+        var maxDist:Int = mapWidth * mapHeight * 1000;
+
+        var r:Day20Route = null;
+
+        for (k in portals.keys())
+        {
+            for (i in portals.keys())
+            {
+                for (j in portals.keys())
+                {
+                    for (lF in 0...11)
+                    {
+                        for (lT in 0...11)
+                        {
+                            // var lT:Int = lF + (lM - 1);
+                            // if ((lF == lT && i == j) || (lF != 0 && i == "A") || (lF == 0 && i != "A"))
+                            //     continue;
+
+                            var ij:Int = maxDist;
+                            var ik:Int = maxDist;
+                            var kj:Int = maxDist;
+
+                            if (shortestPaths.exists('$lF:$i>$lT:$j'))
+                            {
+                                ij = shortestPaths.get('$lF:$i>$lT:$j');
+                            }
+                            else
+                            {
+                                r = null;
+                                r = getRoute(i, j);
+                                if (r != null)
+                                    ij = r.length;
+                            }
+
+                            if (shortestPaths.exists('$lF:$i>$lT:$k'))
+                            {
+                                ik = shortestPaths.get('$lF:$i>$lT:$k');
+                            }
+                            else
+                            {
+                                r = null;
+                                r = getRoute(i, k);
+                                if (r != null)
+                                    ik = r.length;
+                            }
+
+                            if (shortestPaths.exists('$lF:$k>$lT:$j'))
+                            {
+                                kj = shortestPaths.get('$lF:$k>$lT:$j');
+                            }
+                            else
+                            {
+                                r = null;
+                                r = getRoute(k, j);
+                                if (r != null)
+                                    kj = r.length;
+                            }
+                            // trace(i, j, k, lF, lT);
+                            // if ((i == "A" || k == "A") && (k == "l" || j == "l") && lF == 0 && lT == 0)
+                            //     trace(i, j, k, lF, lT, ij, ik, kj);
+
+                            shortestPaths.set('$lF:$i>$lT:$j', FlxMath.minInt(ij, ik + kj));
+                        }
+                    }
+                }
+            }
+        }
+
+        trace([
+            for (i in [for (k in shortestPaths.keys()) k].filter(function(v) return StringTools.startsWith(v, "0:A>")))
+                i + " => " + shortestPaths.get(i)
+        ]);
+        return shortestPaths.get('0:$From>0:$End');
+    }
+
+    private function isValidRoute(LevelFrom:Int, LevelTo:Int, From:String, To:String):Bool
+    {
+        // if (LevelFrom == 0 && LevelTo == 0 && From == "A" && To == "l")
+        // {
+        //     trace((LevelFrom == 0 && (From != "A" && !(From >= "a" && From <= "~"))));
+        //     trace((LevelTo == 0 && (To != "Z" && !(To >= "a" && To <= "~"))));
+        //     trace((LevelTo != 0 && To == "Z"));
+        //     trace((LevelFrom != 0 && From == "A"));
+        // }
+        if (From == To)
+            return false;
+        if (LevelFrom == 0 && (From != "A" && !(From >= "a" && From <= "~"))) // && (To != "Z" || !(To >= "a" && To <= "~")))
+            return false;
+        if (LevelTo == 0 && (To != "Z" && !(To >= "a" && To <= "~"))) // && (From != "A" || !(From >= "a" && From <= "~")))
+            return false;
+        if (LevelTo != 0 && To == "Z")
+            return false;
+        if (LevelFrom != 0 && From == "A")
+            return false;
+
+        // var diff:Int = LevelTo - LevelFrom;
+
+        // if (diff == 0 && From == otherEnd(To))
+        //     return false;
+        // if (Math.abs(diff) == 1 && From != otherEnd(To))
+        //     return false;
+        // if (Math.abs(diff) > 1)
+        //     return false;
+        return true;
     }
 
     private function otherEnd(Key:String):String
     {
-        // trace(Key, Key.charCodeAt(0), String.fromCharCode(Key.charCodeAt(0) + 32), String.fromCharCode(Key.charCodeAt(0) - 32));
         if (Key.charCodeAt(0) <= 96)
             return String.fromCharCode(Key.charCodeAt(0) + 32);
         else
@@ -218,12 +294,12 @@ class Day20 extends Day
     {
         var keys:Array<String> = [Key];
 
-        // if (Key.charCodeAt(0) <= 93)
-        //     keys.push(String.fromCharCode(Key.charCodeAt(0) + 65));
-        // else
-        //     keys.push(String.fromCharCode(Key.charCodeAt(0) - 65));
-
         return T.concat(keys);
+    }
+
+    private function getKeyR(Key:String, Level:Int):String
+    {
+        return Key + ";" + Std.string(Level);
     }
 
     private function computePathDistance(StartIndex:Int, EndIndex:Int):Array<Int>
@@ -327,7 +403,7 @@ class Day20 extends Day
     private function findPath(Start:String, End:String):Day20Route
     {
         // Figure out what tile we are starting and ending on.
-        if (Start == End)
+        if (Start == End || Start == "Z" || End == "A")
             return null;
         var startIndex:Int = portals.get(Start);
 
@@ -337,7 +413,7 @@ class Day20 extends Day
             return null;
         if (Start.charCodeAt(0) == otherEnd(End).charCodeAt(0) || End.charCodeAt(0) == otherEnd(Start).charCodeAt(0))
         {
-            return new Day20Route(Start, End, 1);
+            return new Day20Route(Start, End, 1, End.charCodeAt(0) >= 96 ? -1 : 1);
         }
         // Figure out how far each of the tiles is from the starting tile
 
@@ -480,8 +556,11 @@ class Day20 extends Day
             mapData = mapData.concat(tmp);
         }
         // build lists of all keys and doors:
+
         for (n in 0...mapData.length)
         {
+            if (mapData[n] == 30 || mapData[n] == 0)
+                continue;
             if (mapData[n] >= 41)
             {
                 k = String.fromCharCode(mapData[n] - 41 + "A".charCodeAt(0));
@@ -492,6 +571,8 @@ class Day20 extends Day
                 k = String.fromCharCode(mapData[n] - 2 + "a".charCodeAt(0));
                 portals.set(k, n);
             }
+            // if (k == "}")
+            //     trace(k, mapData[n], n);
         }
         map = new FlxTilemap();
         map.loadMapFromArray(mapData, mapWidth, mapHeight, tiles, 10, 10, FlxTilemapAutoTiling.OFF, 0, 0, 30);
@@ -582,69 +663,18 @@ class Day20 extends Day
     }
 }
 
-// class Day20Node
-// {
-//     public var name:String = "";
-//     public var len:Int = 0;
-//     public function new(Name:String = "", Len:Int = 0)
-//     {
-//         name = Name;
-//         len = Len;
-//     }
-// }
-// class Graph
-// {
-//     private var v:Int;
-//     private var adj:Map<String, Array<String>>;
-//     private var path:Array<String>;
-//     public function new(V:Int)
-//     {
-//         v = V;
-//         adj = new Map<String, Array<String>>();
-//     }
-//     public function addEdge(V:String, W:String):Void
-//     {
-//         var a:Array<String> = [W];
-//         if (adj.exists(V))
-//             a = a.concat(adj.get(V));
-//         adj.set(V, a);
-//     }
-//     public function BFS(S:String):Array<String>
-//     {
-//         path = [];
-//         var visited:Map<String, Bool> = [];
-//         for (k in adj.keys())
-//             visited.set(k, false);
-//         var queue:Array<String> = [];
-//         visited.set(S, true);
-//         queue.push(S);
-//         while (queue.length > 0)
-//         {
-//             var s = queue.shift();
-//             path.push(s);
-//             for (i in adj.get(s))
-//             {
-//                 if (!visited.get(i))
-//                 {
-//                     visited.set(i, true);
-//                     queue.push(i);
-//                 }
-//             }
-//         }
-//         return path;
-//     }
-// }
-
 class Day20Route
 {
     public var startKey:String = "";
     public var endKey:String = "";
     public var length:Int = 0;
+    public var level:Int = 0;
 
-    public function new(Start:String, End:String, Length:Int)
+    public function new(Start:String, End:String, Length:Int, ?Level:Int = 0)
     {
         startKey = Start;
         endKey = End;
         length = Length;
+        level = Level;
     }
 }

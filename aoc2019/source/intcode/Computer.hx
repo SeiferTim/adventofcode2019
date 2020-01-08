@@ -245,4 +245,19 @@ class Computer
     {
         return FlxSort.byValues(FlxSort.ASCENDING, Std.parseFloat(A), Std.parseFloat(B));
     }
+
+    public static function commands(C:String):Array<Int64>
+    {
+        var i:Array<Int64> = cast C.toUpperCase().split("").map(function(v:String):Int64
+        {
+            return Int64.ofInt(v.charCodeAt(0));
+        }).concat([Int64.ofInt(10)]);
+
+        return i;
+    }
+
+    public static function parseResults(C:Array<Int64>):String
+    {
+        return C.map(function(v) return v < 127 ? String.fromCharCode(Int64.toInt(v)) : Int64.toStr(v)).join("");
+    }
 }
